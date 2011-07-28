@@ -23,7 +23,7 @@
 <div data-bind="template: 'tmpl-commitments'">
 </div>
 <button type="button" data-bind="click: startNewDay">Start new day</button>
-
+<button type="button" data-bind="click: clearTasks">Clear list</button>
 <script id="tmpl-commitments" type="text/html">
 <ul>
     {{each(i, t) commitments}}
@@ -60,6 +60,9 @@
         startNewDay: function () {
             var todaysList = $.grep(viewModel.commitments(), function (item) { return item.status() === "pending"; });
             viewModel.commitments(todaysList);
+        },
+        clearTasks: function (){
+            viewModel.commitments([]);
         }
     };
 
