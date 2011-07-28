@@ -19,15 +19,25 @@
     </form>
 </fieldset>
 
-<h3>Commitments</h3>
+<h3>Commitments (<span data-bind="text: commitments().length"></span>)</h3>
 <div data-bind="template: 'tmpl-commitments'">
 </div>
+
 <button type="button" data-bind="click: startNewDay">Start new day</button>
 <button type="button" data-bind="click: clearTasks">Clear list</button>
+
 <script id="tmpl-commitments" type="text/html">
 <ul>
     {{each(i, t) commitments}}
-    <li>${name} - ${status}. <a href="#" data-bind="visible: status() === 'pending', click: function() { viewModel.complete(t); }">done</a>
+    <li>
+        <div data-bind="click: function() { (selectedIndex() == i) ? selectedIndex(undefined) : selectedIndex(i); }">
+            ${name} - ${status}. 
+            <a href="#" data-bind="visible: status() === 'pending', click: function() { viewModel.complete(t); }">complete</a>
+        </div>
+        <div data-bind="visible: selectedIndex() == i">
+            Comments:<br/>
+            <textarea data-bind="value: comments, updateValue: 'afterkeydown'"></textarea>
+        </div>
     </li>
     {{/each}}
 </ul>
@@ -35,9 +45,9 @@
 
 <script type="text/javascript">
 
-
-    var task = function (name, status) {
+    var task = function (name, status, comments) {
         this.name = ko.observable(name);
+        this.comments = ko.observable(comments);
         if (!status) {
             this.status = ko.observable("pending");
         }
@@ -49,6 +59,7 @@
     var viewModel = {
         commitmentToAdd: ko.observable(""),
         commitments: ko.observableArray(),
+        selectedIndex: ko.observable(),
         addCommitment: function () {
             if (viewModel.commitmentToAdd() === "") return;
             viewModel.commitments.push(new task(viewModel.commitmentToAdd()));
@@ -61,19 +72,21 @@
             var todaysList = $.grep(viewModel.commitments(), function (item) { return item.status() === "pending"; });
             viewModel.commitments(todaysList);
         },
-        clearTasks: function (){
+        clearTasks: function () {
             viewModel.commitments([]);
         }
     };
-
+    
+    //load the tasks from local storage.
     var storedViewModel = window.localStorage.getItem("viewModel");
     if (storedViewModel != undefined) {
         var commitments = JSON.parse(storedViewModel).commitments;
-        viewModel.commitments($.map(commitments, function (item) { return new task(item.name, item.status) }));
+        viewModel.commitments($.map(commitments, function (item) { return new task(item.name, item.status, item.description) }));
     }
 
     ko.applyBindings(viewModel);
 
+    //save the tasks to the local storage.
     $(window).unload(function () {
         var jsonViewModel = ko.toJSON(viewModel);
         window.localStorage.setItem("viewModel", jsonViewModel);
