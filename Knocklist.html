@@ -19,13 +19,15 @@
     </form>
 </fieldset>
 
-<h3>Commitments (<span data-bind="text: commitments().length"></span>)</h3>
+<h3>Commitments (<span data-bind="text: pendingCommitments"></span>)</h3>
+<span data-bind="visible: commitments().length == 0">There are no tasks yet. Start adding using the quick add form.</span>
 <div data-bind="template: 'tmpl-commitments'">
 </div>
 
-<button type="button" data-bind="click: startNewDay">Start new day</button>
+<button type="button" data-bind="click: startNewDay, enable: completedCommitments() > 0">Start new day</button>
 <button type="button" data-bind="click: clearTasks">Clear list</button>
-
+<br />
+<span>When starting a new day, all the complete tasks will be removed from the list.</span>
 <script id="tmpl-commitments" type="text/html">
 <ul>
     {{each(i, t) commitments}}
@@ -59,6 +61,7 @@
     var viewModel = {
         commitmentToAdd: ko.observable(""),
         commitments: ko.observableArray(),
+
         selectedIndex: ko.observable(),
         addCommitment: function () {
             if (viewModel.commitmentToAdd() === "") return;
@@ -76,7 +79,17 @@
             viewModel.commitments([]);
         }
     };
-    
+
+    viewModel.pendingCommitments = ko.dependentObservable(function () {
+        var list = viewModel.commitments();
+        return $.grep(list, function (item) { return item.status() == 'pending'; }).length;
+    });
+
+    viewModel.completedCommitments = ko.dependentObservable(function () {
+        var list = viewModel.commitments();
+        return $.grep(list, function (item) { return item.status() != 'pending'; }).length;
+    });
+
     //load the tasks from local storage.
     var storedViewModel = window.localStorage.getItem("viewModel");
     if (storedViewModel != undefined) {
