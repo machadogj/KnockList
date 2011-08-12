@@ -8,104 +8,34 @@
     <script src="Scripts/modernizr-1.7.js" type="text/javascript"></script>
     <script src="Scripts/jquery.tmpl.js" type="text/javascript"></script>
     <script src="Scripts/knockout-1.2.1.js" type="text/javascript"></script>
+    <script src="Scripts/knocklist.js" type="text/javascript"></script>
 </head>
 <body>
 <h2>Today's commitments</h2>
-<fieldset title="Quick add">
-    <form data-bind="submit: addCommitment">
+<fieldset id="newTask" title="Quick add">
+    <form data-bind="submit: save">
         <label>Commit to:</label>
-        <input name="commitment" data-bind="value: commitmentToAdd, valueUpdate: 'afterkeydown'" />
-        <button type="submit" data-bind="enable: commitmentToAdd().length > 0">Add</button>
+        <input name="commitment" data-bind="value: name, valueUpdate: 'afterkeydown'" />
+        <button type="submit" data-bind="enable: hasName">Add</button>
     </form>
 </fieldset>
 
-<h3>Commitments (<span data-bind="text: pendingCommitments"></span>)</h3>
-<span data-bind="visible: commitments().length == 0">There are no tasks yet. Start adding using the quick add form.</span>
-<div data-bind="template: 'tmpl-commitments'">
+<div id="todaysTasks" data-bind="template: 'tmpl-commitments'">
 </div>
-
-<button type="button" data-bind="click: startNewDay, enable: completedCommitments() > 0">Start new day</button>
-<button type="button" data-bind="click: clearTasks">Clear list</button>
-<br />
-<span>When starting a new day, all the complete tasks will be removed from the list.</span>
 <script id="tmpl-commitments" type="text/html">
 <ul>
-    {{each(i, t) commitments}}
+    {{each(i, t) tasks}}
     <li>
-        <div data-bind="click: function() { (selectedIndex() == i) ? selectedIndex(undefined) : selectedIndex(i); }">
             ${name} - ${status}. 
-            <a href="#" data-bind="visible: status() === 'pending', click: function() { viewModel.complete(t); }">complete</a>
-        </div>
-        <div data-bind="visible: selectedIndex() == i">
-            Comments:<br/>
-            <textarea data-bind="value: comments, updateValue: 'afterkeydown'"></textarea>
-        </div>
     </li>
     {{/each}}
 </ul>
 </script>
 
 <script type="text/javascript">
-
-    var task = function (name, status, comments) {
-        this.name = ko.observable(name);
-        this.comments = ko.observable(comments);
-        if (!status) {
-            this.status = ko.observable("pending");
-        }
-        else {
-            this.status = ko.observable(status);
-        }
-    };
-
-    var viewModel = {
-        commitmentToAdd: ko.observable(""),
-        commitments: ko.observableArray(),
-
-        selectedIndex: ko.observable(),
-        addCommitment: function () {
-            if (viewModel.commitmentToAdd() === "") return;
-            viewModel.commitments.push(new task(viewModel.commitmentToAdd()));
-            viewModel.commitmentToAdd("");
-        },
-        complete: function (task) {
-            task.status("done");
-        },
-        startNewDay: function () {
-            var todaysList = $.grep(viewModel.commitments(), function (item) { return item.status() === "pending"; });
-            viewModel.commitments(todaysList);
-        },
-        clearTasks: function () {
-            viewModel.commitments([]);
-        }
-    };
-
-    viewModel.pendingCommitments = ko.dependentObservable(function () {
-        var list = viewModel.commitments();
-        return $.grep(list, function (item) { return item.status() == 'pending'; }).length;
-    });
-
-    viewModel.completedCommitments = ko.dependentObservable(function () {
-        var list = viewModel.commitments();
-        return $.grep(list, function (item) { return item.status() != 'pending'; }).length;
-    });
-
-    //load the tasks from local storage.
-    var storedViewModel = window.localStorage.getItem("viewModel");
-    if (storedViewModel != undefined) {
-        var commitments = JSON.parse(storedViewModel).commitments;
-        viewModel.commitments($.map(commitments, function (item) { return new task(item.name, item.status, item.description) }));
-    }
-
-    ko.applyBindings(viewModel);
-
-    //save the tasks to the local storage.
-    $(window).unload(function () {
-        var jsonViewModel = ko.toJSON(viewModel);
-        window.localStorage.setItem("viewModel", jsonViewModel);
-    });
-    
-    
-</script>    
+    var todaysBacklog = new knocklist.Backlog();
+    ko.applyBindings(todaysBacklog.newTask, document.getElementById("newTask"));
+    ko.applyBindings(todaysBacklog, document.getElementById("todaysTasks"));
+</script>
 </body>
 </html>
