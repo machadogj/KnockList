@@ -7,7 +7,7 @@
     <script src="Scripts/jquery-1.5.1.js" type="text/javascript"></script>
     <script src="Scripts/modernizr-1.7.js" type="text/javascript"></script>
     <script src="Scripts/jquery.tmpl.js" type="text/javascript"></script>
-    <script src="Scripts/knockout-1.2.1.js" type="text/javascript"></script>
+    <script src="Scripts/knockout-1.2.1.debug.js" type="text/javascript"></script>
     <script src="Scripts/knocklist.js" type="text/javascript"></script>
 </head>
 <body>
@@ -20,22 +20,29 @@
     </form>
 </fieldset>
 
-<div id="todaysTasks" data-bind="template: 'tmpl-commitments'">
+<div id="todaysTasks">
+    <h3>Commitments <span data-bind="text: completeVsTotal"></span></h3>
+    <ul data-bind="template: {name: 'tmpl-commitments', foreach: tasks}">
+        <script id="tmpl-commitments" type="text/html">
+            <li>
+                <span data-bind="click: toggleSelected">${name} - ${status}.</span><a href="javascript:{}" data-bind="click: complete, visible: status() === 'pending'">complete</a>
+                <div data-bind="visible: selected">
+                    <textarea data-bind="value: description"/>
+                </div>
+            </li>
+        </script>
+    </ul>
+    <button type="submit" data-bind="enable: completed().length > 0, click: clearCompleted">Start new day!</button>
+    <button type="submit" data-bind="enable: tasks().length > 0, click: clearTasks">Clear</button>
 </div>
-<script id="tmpl-commitments" type="text/html">
-<ul>
-    {{each(i, t) tasks}}
-    <li>
-            ${name} - ${status}. 
-    </li>
-    {{/each}}
-</ul>
-</script>
+<p>When starting a new day, all the complete tasks will be removed from the list. </p>
 
 <script type="text/javascript">
     var todaysBacklog = new knocklist.Backlog();
     ko.applyBindings(todaysBacklog.newTask, document.getElementById("newTask"));
     ko.applyBindings(todaysBacklog, document.getElementById("todaysTasks"));
+
+    
 </script>
 </body>
 </html>

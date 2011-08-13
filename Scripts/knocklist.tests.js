@@ -38,6 +38,24 @@ test("complate sets the status to 'complete'", function () {
     equal(t.status(), "complete");
 });
 
+test("by default a task is not selected.", function () {
+    var t = new knocklist.Task("name");
+    ok(!t.selected());
+});
+
+test("when toggleSelected a new task, task is selected", function () {
+    var t = new knocklist.Task("name");
+    t.toggleSelected();
+    ok(t.selected());
+});
+
+test("when toggleSelected a selected task, task is not selected anymore", function () {
+    var t = new knocklist.Task("name");
+    t.selected(true);
+    t.toggleSelected();
+    ok(!t.selected());
+});
+
 module("newTaskModel");
 test("toTask creates a task with the right name", function () {
     var m = new knocklist.NewTaskModel();
@@ -111,7 +129,7 @@ test("when adding a task and then completing it, pending tasks is empty", functi
     var backlog = new knocklist.Backlog();
     var t = new knocklist.Task("test task");
     backlog.tasks.push(t);
-    t.status("completed");
+    t.complete();
     //assert
     equal(backlog.pending().length, 0);
 });
@@ -120,7 +138,7 @@ test("when adding a task and then completing it, completed tasks has one", funct
     var backlog = new knocklist.Backlog();
     var t = new knocklist.Task("test task");
     backlog.tasks.push(t);
-    t.status("completed");
+    t.complete();
     //assert
     equal(backlog.completed().length, 1);
 });
@@ -129,8 +147,31 @@ test("when cleaning completed tasks, backlog's completed tasks is empty", functi
     var backlog = new knocklist.Backlog();
     var t = new knocklist.Task("test task");
     backlog.tasks.push(t);
-    t.status("completed");
-    backlog.cleanCompleted();
+    t.complete();
+    backlog.clearCompleted();
+
+    equal(backlog.completed().length, 0);
+});
+
+test("when cleaning completed tasks, backlog's uncompleted tasks are not deleted.", function () {
+    var backlog = new knocklist.Backlog();
+    var t = new knocklist.Task("test task");
+    backlog.tasks.push(t);
+    backlog.clearCompleted();
+
+    equal(backlog.tasks().length, 1);
+});
+
+test("when cleaning a completed task, backlog's uncompleted task is not deleted.", function () {
+    var backlog = new knocklist.Backlog();
+    var t1 = new knocklist.Task("test task");
+    backlog.tasks.push(t1);
+    var t2 = new knocklist.Task("test task");
+    backlog.tasks.push(t2);
+    t2.complete();
+    backlog.clearCompleted();
+
+    equal(backlog.tasks().length, 1);
 });
 
 test("when cleaning tasks, backlog's tasks is empty", function () {
@@ -141,3 +182,24 @@ test("when cleaning tasks, backlog's tasks is empty", function () {
     equal(backlog.tasks().length, 0);
 });
 
+test("when backlog is empty, completeVsTotal is 0/0", function () {
+    var backlog = new knocklist.Backlog();
+
+    equal(backlog.completeVsTotal(), "0/0");
+});
+
+test("when there's a pending task in the backlog, completeVsTotal is 0/1", function () {
+    var backlog = new knocklist.Backlog();
+    backlog.newTask.save();
+
+    equal(backlog.completeVsTotal(), "0/1");
+});
+
+test("when there's one complete task in the backlog, completeVsTotal is 1/1", function () {
+    var backlog = new knocklist.Backlog();
+    var t = new knocklist.Task();
+    backlog.tasks.push(t);
+    t.complete();
+
+    equal(backlog.completeVsTotal(), "1/1");
+});
