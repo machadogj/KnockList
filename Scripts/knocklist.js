@@ -22,6 +22,14 @@ var knocklist = (function () {
             backlog.tasks.remove(this);
             backlog.planner.product.tasks.push(this);
         };
+
+        this.toDto = function(){
+            return {name: this.name(), completed: this.completed(), description: this.description()};
+        };
+        
+        if (backlog){
+            backlog.tasks.push(this);
+        }
     };
 
     var NewTaskModel = function (backlog) {
@@ -34,7 +42,7 @@ var knocklist = (function () {
             this.name("");
         }
         this.save = function () {
-            this.backlog.tasks.push(this.toTask());
+            this.toTask();
             this.clear();
         };
 

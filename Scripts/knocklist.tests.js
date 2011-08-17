@@ -49,6 +49,16 @@ test("when toggling a selected task, task is not selected anymore", function () 
     ok(!t.selected());
 });
 
+test("when storing a task, should contain name, status and description", function(){
+    var t = new knocklist.Task("test name", true, "test description");
+
+    var dto = t.toDto();
+
+    equal(dto.name, "test name");
+    equal(dto.completed, true);
+    equal(dto.description, "test description");
+});
+
 module("newTaskModel");
 test("toTask creates a task with the right name", function () {
     var m = new knocklist.NewTaskModel();
