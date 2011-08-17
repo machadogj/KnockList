@@ -4,52 +4,45 @@
 /// <reference path="knocklist.js" />
 
 module("tasks");
-test("new task is in pending status.", function () {
+test("when creating a task, it is not completed.", function () {
     var t = new knocklist.Task();
     //assert
-    equal(t.status(), "pending");
+    ok(!t.completed());
 });
 
-test("new task should contain name.", function () {
+test("when creating a task, you can specify a name.", function () {
     var name = "test task";
     var t = new knocklist.Task(name);
     //assert
     equal(t.name(), name);
 });
 
-test("new task accepts status in constructor", function () {
+test("when creating a task, you can specify a complete status", function () {
     var status = "completed";
-    var t = new knocklist.Task("some name", status);
+    var t = new knocklist.Task("some name", true);
     //assert
-    equal(t.status(), status);
+    ok(t.completed());
 });
 
-test("task accepts description in the constructor", function () {
+test("when creating a task with a specified status, you can also specify the description", function () {
     var description = "some description";
-    var t = new knocklist.Task("name", undefined, description);
+    var t = new knocklist.Task("name", true, description);
     //assert
     equal(t.description(), description);
 });
 
-test("complate sets the status to 'complete'", function () {
-    var t = new knocklist.Task("name");
-    t.complete();
-    //assert
-    equal(t.status(), "complete");
-});
-
-test("by default a task is not selected.", function () {
+test("when creating a new task, it should not be selected.", function () {
     var t = new knocklist.Task("name");
     ok(!t.selected());
 });
 
-test("when toggleSelected a new task, task is selected", function () {
+test("when toggling an unselected task, task is selected", function () {
     var t = new knocklist.Task("name");
     t.toggleSelected();
     ok(t.selected());
 });
 
-test("when toggleSelected a selected task, task is not selected anymore", function () {
+test("when toggling a selected task, task is not selected anymore", function () {
     var t = new knocklist.Task("name");
     t.selected(true);
     t.toggleSelected();
@@ -71,7 +64,7 @@ test("clear sets the name to empty string", function () {
     equal(m.name(), "");
 });
 
-test("when saving new task, task is stored in backlog's tasks.", function () {
+test("when saving a new task, task is added to the backlog's tasks.", function () {
     var backlog = new knocklist.Backlog();
     var m = backlog.newTask;
     m.name("test task");
@@ -81,7 +74,7 @@ test("when saving new task, task is stored in backlog's tasks.", function () {
     equal(backlog.tasks()[0].name(), "test task");
 });
 
-test("has value is true when name is set.", function () {
+test("has name is true when name is not empty.", function () {
     var m = new knocklist.Backlog().newTask;
     m.name("test task");
     //assert
@@ -89,37 +82,37 @@ test("has value is true when name is set.", function () {
 });
 
 module("backlog");
-test("backlog contains empty list of tasks.", function () {
+test("a new backlog should contain an empty list of tasks.", function () {
     var backlog = new knocklist.Backlog();
     //assert
     ok(backlog.tasks().length === 0, "actual: " + backlog.tasks);
 });
 
-test("backlog contains empty list of pending tasks.", function () {
+test("a new backlog should contain an empty list of pending tasks.", function () {
     var backlog = new knocklist.Backlog();
     //assert
     ok(backlog.pending().length === 0);
 });
 
-test("backlog contains empty list of completed tasks.", function () {
+test("a new backlog should contain an empty list of completed tasks.", function () {
     var backlog = new knocklist.Backlog();
     //assert
     ok(backlog.completed().length === 0);
 });
 
-test("when a pending task is added, tasks length is one", function () {
+test("should be able to add a task to the backlog.", function () {
     var backlog = new knocklist.Backlog();
     backlog.tasks.push(new knocklist.Task("test task"));
     equal(backlog.tasks().length, 1);
 });
 
-test("when a pending task is added, pending tasks is one", function () {
+test("when a pending task is added, pending tasks contains one task", function () {
     var backlog = new knocklist.Backlog();
     backlog.tasks.push(new knocklist.Task("test task"));
     equal(backlog.pending().length, 1);
 });
 
-test("when a pending task is added, completed length is zero", function () {
+test("when a pending task is added, completed tasks is empty", function () {
     var backlog = new knocklist.Backlog();
     backlog.tasks.push(new knocklist.Task("test task"));
     equal(backlog.completed().length, 0);
@@ -202,4 +195,49 @@ test("when there's one complete task in the backlog, completeVsTotal is 1/1", fu
     t.complete();
 
     equal(backlog.completeVsTotal(), "1/1");
+});
+
+module("planner");
+test("a planner should contain a product backlog", function(){
+    var planner = new knocklist.Planner();
+
+    ok(planner.product != undefined);
+});
+
+test("a planner should contain a backlog for the current day", function(){
+   var planner = new knocklist.Planner();
+
+    ok(planner.current != undefined);
+});
+
+test("when committing to a task, the task should be removed from the product backlog", function(){
+    var planner = new knocklist.Planner();
+    planner.product.newTask.save();
+    planner.product.tasks()[0].commit(); //committing.
+
+    ok(planner.product.tasks().length == 0);
+});
+
+test("when committing to a task, the task should be added to the current backlog", function(){
+    var planner = new knocklist.Planner();
+    planner.product.newTask.save();
+    planner.product.tasks()[0].commit(); //committing.
+
+    ok(planner.current.tasks().length == 1);
+});
+
+test("when post-poning a task, the task should be removed from the current backlog", function(){
+    var planner = new knocklist.Planner();
+    planner.current.newTask.save();
+    planner.current.tasks()[0].postpone(); //postponing
+
+    ok(planner.current.tasks().length == 0);
+});
+
+test("when post-poning a task, the task should be added to the product backlog", function(){
+    var planner = new knocklist.Planner();
+    planner.current.newTask.save();
+    planner.current.tasks()[0].postpone(); //postponing
+
+    ok(planner.product.tasks().length == 1);
 });

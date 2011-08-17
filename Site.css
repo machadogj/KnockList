@@ -1,4 +1,4 @@
-body
+﻿body
 {
     font-size: .85em;
     font-family: "Trebuchet MS", Verdana, Helvetica, Sans-Serif;
@@ -72,4 +72,27 @@ textarea
 .validation-summary-valid
 {
     display: none;
+}
+
+.complete
+{
+	text-decoration:line-through;
+}
+
+#currentTasks
+{
+    margin-left:10px;
+    padding: 10px;
+    background: gray;
+    float:left;
+    width:40%;
+}
+
+#productTasks
+{
+    padding: 10px;
+    margin-left:10px;
+    background: pink;
+    width:40%;
+    float:left;
 }
