@@ -49,6 +49,13 @@ test("when toggling a selected task, task is not selected anymore", function () 
     ok(!t.selected());
 });
 
+test("when deleting a task, it be removed from the backlog", function() {
+   var backlog = new knocklist.Backlog();
+    backlog.newTask.save();
+    backlog.tasks()[0].remove();
+
+    ok(backlog.tasks().length == 0);
+});
 test("when storing a task, should contain name, status and description", function(){
     var t = new knocklist.Task("test name", true, "test description");
 
@@ -250,4 +257,13 @@ test("when post-poning a task, the task should be added to the product backlog",
     planner.current.tasks()[0].postpone(); //postponing
 
     ok(planner.product.tasks().length == 1);
+});
+
+test("if you postpone, then commit to the same task, the task should be removed from product backlog", function(){
+   var planner = new knocklist.Planner();
+    var task = planner.current.newTask.save();
+    task.postpone();
+    task.commit();
+    
+    equal(planner.product.tasks().length, 0);
 });

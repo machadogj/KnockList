@@ -14,15 +14,19 @@ var knocklist = (function () {
         };
 
         this.commit = function(){
-            backlog.tasks.remove(this);
+            backlog.planner.product.tasks.remove(this);
             backlog.planner.current.tasks.push(this);
         };
 
         this.postpone = function(){
-            backlog.tasks.remove(this);
+            backlog.planner.current.tasks.remove(this);
             backlog.planner.product.tasks.push(this);
         };
 
+        this.remove = function(){
+            backlog.tasks.remove(this);
+        };
+        
         this.toDto = function(){
             return {name: this.name(), completed: this.completed(), description: this.description()};
         };
@@ -42,8 +46,9 @@ var knocklist = (function () {
             this.name("");
         }
         this.save = function () {
-            this.toTask();
+            var task = this.toTask();
             this.clear();
+            return task;
         };
 
         this.hasName = ko.dependentObservable(function () {

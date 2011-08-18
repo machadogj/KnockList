@@ -8,6 +8,7 @@
     <script src="Scripts/jquery.tmpl.js" type="text/javascript"></script>
     <script src="Scripts/modernizr-1.7.js" type="text/javascript"></script>
     <script src="Scripts/knockout-1.2.1.debug.js" type="text/javascript"></script>
+    <script src="Scripts/jquery.unobtrusive-knockout.js" type="text/javascript"></script>
     <script src="Scripts/knocklist.js" type="text/javascript"></script>
 </head>
 <body>
@@ -17,33 +18,34 @@
         <h3>Current Tasks </h3>
 
         <fieldset id="newCurrentTask" title="Quick add">
-            <form data-bind="submit: save">
+            <form>
                 <label>Task: </label>
-                <input name="commitment" data-bind="value: name, valueUpdate: 'afterkeydown'" />
-                <button type="submit" data-bind="enable: hasName">Add</button>
+                <input name="commitment" />
+                <button type="submit">Add</button>
             </form>
         </fieldset>
 
         <div id="currentTasksList">
-            <p data-bind="visible: tasks().length == 0">There are no tasks in your bucket for today. Add tasks using the quick add, or commit to tasks from the product backlog.</p>
-            <ul data-bind="template: {name: 'tmpl-current-tasks', foreach: tasks}">
-
+            <p id="empty-current-tasks-notice">There are no tasks in your bucket for today. Add tasks using the quick add, or commit to tasks from the product backlog.</p>
+            <ul>
                 <script id="tmpl-current-tasks" type="text/html">
                     <li>
                         <input type="checkbox" data-bind="checked: completed" />
                         <span data-bind="click: toggleSelected, text: name, css: {complete: completed}"></span>
                         <a href="#" data-bind="click: postpone, visible: !completed()">postpone</a>
+                        <a href="#" data-bind="click: remove">delete</a>
                         <div data-bind="visible: selected">
                             <textarea data-bind="value: description"/>
                         </div>
                     </li>
                 </script>
             </ul>
-            <p data-bind="text: completeVsTotal"></p>
-            <button type="submit" data-bind="enable: completed().length > 0, click: clearCompleted">Start new day!</button>
-            <button type="submit" data-bind="enable: tasks().length > 0, click: clearTasks">Clear</button>
+            <p id="current-completed-tasks"></p>
+            <button id="start-new-day">Start new day!</button>
+            <button id="clear-current-tasks" type="submit">Clear</button>
             <p>When starting a new day, all the complete tasks will be removed from the list. </p>
         </div>
+        
     </div>
 
     <div id="productTasks">
@@ -65,6 +67,7 @@
                     <li>
                         <span data-bind="text: name"></span>
                         <a href="#" data-bind="click: commit">commit</a>
+                        <a href="#" data-bind="click: remove">delete</a>
                         <div data-bind="visible: selected">
                             <textarea data-bind="value: description"/>
                         </div>
@@ -76,6 +79,28 @@
     </div>
 
 <script type="text/javascript">
+    /*data bindings UNOBTRUSIVE!*/
+    $("#newCurrentTask > form").dataBind({
+        submit: 'save'
+    });
+    $("#newCurrentTask > form input[name='commitment']").dataBind({
+        value: 'name',
+        valueUpdate: '"afterkeydown"'
+    });
+    $("#newCurrentTask > form button").dataBind({
+        enable: 'hasName'
+    });
+    $("#empty-current-tasks-notice").dataBind({
+        visible: 'tasks().length == 0'
+    });
+    $("#currentTasksList ul").dataBind({
+        template: { name: "'tmpl-current-tasks'",foreach: 'tasks'}
+    });
+    $("#tmpl-current-tasks span").dataBind({text: 'name'}); //not working inside of templates!
+    $("#current-completed-tasks").dataBind({text: 'completeVsTotal'});
+    $("#start-new-day").dataBind({enable: 'completed().length > 0', click: 'clearCompleted'});
+    $("#clear-current-tasks").dataBind({enable: 'tasks().length > 0', click: 'clearTasks'});
+
     var planner = new knocklist.Planner();
     var currentBacklog = planner.current;
     var productBacklog = planner.product;
@@ -90,8 +115,8 @@
     var storedViewModel = window.localStorage.getItem("planner");
     if (storedViewModel != undefined) {
         var parsed = JSON.parse(storedViewModel);
-        $.each(parsed.current, function(t) { new knocklist.Task(t.name, t.completed, t.description, currentBacklog); });
-        $.each(parsed.product, function(t) { new knocklist.Task(t.name, t.completed, t.description, productBacklog); });
+        $.each(parsed.current, function(i,t) { new knocklist.Task(t.name, t.completed, t.description, currentBacklog); });
+        $.each(parsed.product, function(i,t) { new knocklist.Task(t.name, t.completed, t.description, productBacklog); });
     }
 
     //save the tasks to the local storage.
